@@ -6,11 +6,12 @@
 #include<netinet/in.h>
 
 #define port 9898
+#define MAX 512
 void main()
 {
 
 int sock,new_sock,res,nread;
-char buffer[100];
+char buffer[MAX];
 struct sockaddr_in ser_addr,cli_addr;
 
 sock=socket(AF_INET,SOCK_STREAM,0);
