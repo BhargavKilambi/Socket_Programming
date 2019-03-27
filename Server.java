@@ -69,13 +69,21 @@ public class Server
 				new BufferedInputStream(socket.getInputStream())); 
 
 			String line = ""; 
-
+            out = new DataOutputStream(socket.getOutputStream());
+            try {
+                out.writeUTF("r"+e.toString());
+                System.out.println(e+"\n");
+                System.out.println(decrypt(("hi").getBytes()));
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
 			// reads message from client until "Over" is sent 
 			while (!line.equals("Over")) 
 			{ 
 				try
 				{ 
-					line = in.readUTF(); 
+                    line = in.readUTF(); 
+
                     System.out.println(line); 
                     String teststring = line;
                     System.out.println("Encrypting String: " + teststring);
@@ -87,15 +95,19 @@ public class Server
                     // encrypt
             
                     byte[] encrypted = encrypt(teststring.getBytes());
-                    System.out.println(encrypted);
                     // decrypt
-            
+                    System.out.println(bytesToString(encrypted));
+                    //writing out encrypted byte array
+                    out.writeInt(encrypted.length);
+                    out.write(encrypted); 
+
                     byte[] decrypted = decrypt(encrypted);
             
                     System.out.println("Decrypting Bytes: " + bytesToString(decrypted));
-                    out = new DataOutputStream(socket.getOutputStream());
-                    out.writeUTF("Decrypted Bytes: " + bytesToString(decrypted)); 
+                    
+                    
                     System.out.println("Decrypted String: " + new String(decrypted));
+                
 
 				} 
 				catch(IOException i) 
