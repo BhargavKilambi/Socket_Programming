@@ -1,29 +1,51 @@
 import java.net.*;
 import java.util.Scanner;
 import java.io.*; 
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Random;
   
 public class Client 
 { 
+    private BigInteger p,q,N,phi,e,d;
+
+    private int bitlength = 1024;
+
+    private Random r;
     // initialize socket and input output streams 
     private Socket socket            = null; 
-    //private DataInputStream  input   = null; 
     private DataOutputStream out     = null; 
-    private DataInputStream in = null;
-  
-    // constructor to put ip address and port 
     public Client(String address, int port) 
     { 
-        // establish a connection 
+        r = new Random();
+
+        p = BigInteger.probablePrime(bitlength, r);
+
+        q = BigInteger.probablePrime(bitlength, r);
+
+        N = p.multiply(q);
+
+        phi = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+
+        e = BigInteger.probablePrime(bitlength / 2, r);
+
+        while (phi.gcd(e).compareTo(BigInteger.ONE) > 0 && e.compareTo(phi) < 0)
+
+        {
+
+            e.add(BigInteger.ONE);
+
+        }
+
+        d = e.modInverse(phi);
+
         try
         { 
             socket = new Socket(address, port); 
             System.out.println("Connected"); 
   
-            // takes input from terminal  
-  
-            // sends output to the socket 
             out    = new DataOutputStream(socket.getOutputStream()); 
-            in = new DataInputStream(socket.getInputStream());
         } 
         catch(UnknownHostException u) 
         { 
@@ -37,19 +59,31 @@ public class Client
         // string to read message from input 
         String line = ""; 
         Scanner sc = new Scanner(System.in);
+        
+        try {
+            out.writeUTF(e.toString() + ",," + phi.toString() + ",," + N.toString());
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
         // keep reading until "Over" is input 
         while (!line.equals("Over")) 
         { 
             try
             { 
-                
+                System.out.println("\n-------------\nEnter Message:");
+                if(!line.equals("Over")){
                 line = sc.nextLine();
-                out.writeUTF(line); 
-                System.out.println(in.readUTF());
+                byte[] encr = encrypt(line.getBytes());
+                BigInteger b = new BigInteger(encr);
+                out.writeUTF(b.toString());
+                
+                System.out.println("Encrypted Message Sent Successfully!");
+                }
+                
             } 
             catch(IOException i) 
             { 
-                System.out.println(i); 
+                //
             } 
         } 
   
@@ -70,4 +104,28 @@ public class Client
     { 
         Client client = new Client("127.0.0.1", 5000); 
     } 
+
+ 
+
+    // Encrypt message
+
+    public byte[] encrypt(byte[] message)
+
+    {
+
+        return (new BigInteger(message)).modPow(e, N).toByteArray();
+
+    }
+
+ 
+
+    // Decrypt message
+
+    public byte[] decrypt(byte[] message)
+
+    {
+
+        return (new BigInteger(message)).modPow(d, N).toByteArray();
+
+    }
 } 
