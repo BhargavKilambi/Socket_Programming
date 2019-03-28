@@ -8,28 +8,14 @@ import java.util.Random;
   
 public class Client 
 { 
-    private static BigInteger p;
+    private BigInteger p,q,N,phi,e,d;
 
-    private static BigInteger q;
+    private int bitlength = 1024;
 
-    private static BigInteger N;
-
-    private static BigInteger phi;
-
-    private static BigInteger e;
-
-    private static BigInteger d;
-
-    private static int bitlength = 1024;
-
-    private static Random r;
+    private Random r;
     // initialize socket and input output streams 
     private Socket socket            = null; 
-    //private DataInputStream  input   = null; 
     private DataOutputStream out     = null; 
-    private DataInputStream in = null;
-  
-    // constructor to put ip address and port 
     public Client(String address, int port) 
     { 
         r = new Random();
@@ -53,17 +39,13 @@ public class Client
         }
 
         d = e.modInverse(phi);
-        // establish a connection 
+
         try
         { 
             socket = new Socket(address, port); 
             System.out.println("Connected"); 
   
-            // takes input from terminal  
-  
-            // sends output to the socket 
             out    = new DataOutputStream(socket.getOutputStream()); 
-            in = new DataInputStream(socket.getInputStream());
         } 
         catch(UnknownHostException u) 
         { 
@@ -77,39 +59,31 @@ public class Client
         // string to read message from input 
         String line = ""; 
         Scanner sc = new Scanner(System.in);
+        
         try {
-            line = in.readUTF();
+            out.writeUTF(e.toString() + ",," + phi.toString() + ",," + N.toString());
         } catch (IOException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
-        }
-        if(line.charAt(0)=='r'){
-            System.out.println("Public Key received!");
-            e = new BigInteger(line.substring(1));
-            d = e.modInverse(phi);
-            System.out.println(e+"\n");
-            System.out.println(decrypt(("hi").getBytes()));
         }
         // keep reading until "Over" is input 
         while (!line.equals("Over")) 
         { 
             try
             { 
+                System.out.println("\n-------------\nEnter Message:");
+                if(!line.equals("Over")){
+                line = sc.nextLine();
+                byte[] encr = encrypt(line.getBytes());
+                BigInteger b = new BigInteger(encr);
+                out.writeUTF(b.toString());
                 
-                String line1 = sc.nextLine();
-                out.writeUTF(line1);
-                int len = in.readInt();
-                byte[] s1 = new byte[len];
-                in.readFully(s1);
-                System.out.println("Received Encrypted :");
-                System.out.println("\n"+bytesToString(s1));
-                byte[] decrypted = decrypt(s1);
-                System.out.println("Decrypted:"+new String(decrypted));
+                System.out.println("Encrypted Message Sent Successfully!");
+                }
                 
             } 
             catch(IOException i) 
             { 
-                System.out.println(i); 
+                //
             } 
         } 
   
@@ -130,29 +104,12 @@ public class Client
     { 
         Client client = new Client("127.0.0.1", 5000); 
     } 
-    public static String bytesToString(byte[] encrypted)
-
-    {
-
-        String test = "";
-
-        for (byte b : encrypted)
-
-        {
-
-            test += Byte.toString(b);
-
-        }
-
-        return test;
-
-    }
 
  
 
     // Encrypt message
 
-    public static byte[] encrypt(byte[] message)
+    public byte[] encrypt(byte[] message)
 
     {
 
@@ -164,7 +121,7 @@ public class Client
 
     // Decrypt message
 
-    public static byte[] decrypt(byte[] message)
+    public byte[] decrypt(byte[] message)
 
     {
 

@@ -4,25 +4,10 @@ import java.io.*;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Random;
 
 public class Server 
 { 
-    private static BigInteger p;
-
-    private static BigInteger q;
-
-    private static BigInteger N;
-
-    private static BigInteger phi;
-
-    private static BigInteger e;
-
-    private static BigInteger d;
-
-    private static int bitlength = 1024;
-
-    private static Random r;
+    private BigInteger z,n,e,d;
 	//initialize socket and input stream 
 	private Socket		 socket = null; 
 	private ServerSocket server = null; 
@@ -32,27 +17,6 @@ public class Server
 	// constructor with port 
 	public Server(int port) 
 	{ 
-        r = new Random();
-
-        p = BigInteger.probablePrime(bitlength, r);
-
-        q = BigInteger.probablePrime(bitlength, r);
-
-        N = p.multiply(q);
-
-        phi = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
-
-        e = BigInteger.probablePrime(bitlength / 2, r);
-
-        while (phi.gcd(e).compareTo(BigInteger.ONE) > 0 && e.compareTo(phi) < 0)
-
-        {
-
-            e.add(BigInteger.ONE);
-
-        }
-
-        d = e.modInverse(phi);
 		// starts server and waits for a connection 
 		try
 		{ 
@@ -65,54 +29,34 @@ public class Server
 			System.out.println("Client accepted"); 
 
 			// takes input from the client socket 
-			in = new DataInputStream( 
-				new BufferedInputStream(socket.getInputStream())); 
+			in = new DataInputStream(socket.getInputStream()); 
 
-			String line = ""; 
-            out = new DataOutputStream(socket.getOutputStream());
-            try {
-                out.writeUTF("r"+e.toString());
-                System.out.println(e+"\n");
-                System.out.println(decrypt(("hi").getBytes()));
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
+            String line = "";
+            line = in.readUTF();
+            String[] str = line.split(",,");
+            this.e = new BigInteger(str[0]);
+            this.z = new BigInteger(str[1]);
+            this.n = new BigInteger(str[2]);
+            this.d = e.modInverse(z);
+            line = "";
 			// reads message from client until "Over" is sent 
 			while (!line.equals("Over")) 
 			{ 
 				try
 				{ 
                     line = in.readUTF(); 
+                    if(!line.equals("Over")){
+                        System.out.println("Message Recieved");
+                    BigInteger b = new BigInteger(line);
+                    byte[] decrypted = decrypt(b.toByteArray());
 
-                    System.out.println(line); 
-                    String teststring = line;
-                    System.out.println("Encrypting String: " + teststring);
-
-                    System.out.println("String in Bytes: "
-            
-                            + bytesToString(teststring.getBytes()));
-            
-                    // encrypt
-            
-                    byte[] encrypted = encrypt(teststring.getBytes());
-                    // decrypt
-                    System.out.println(bytesToString(encrypted));
-                    //writing out encrypted byte array
-                    out.writeInt(encrypted.length);
-                    out.write(encrypted); 
-
-                    byte[] decrypted = decrypt(encrypted);
-            
-                    System.out.println("Decrypting Bytes: " + bytesToString(decrypted));
-                    
-                    
                     System.out.println("Decrypted String: " + new String(decrypted));
-                
+                    }
 
 				} 
 				catch(IOException i) 
 				{ 
-					System.out.println(i); 
+					// 
 				} 
 			} 
 			System.out.println("Closing connection"); 
@@ -124,7 +68,7 @@ public class Server
 		} 
 		catch(IOException i) 
 		{ 
-            System.out.println(i); 
+            //
             
 		} 
 	} 
@@ -132,35 +76,17 @@ public class Server
 	public static void main(String args[]) 
 	{ 
 		Server server = new Server(5000); 
-    } 
-
-    public static String bytesToString(byte[] encrypted)
-
-    {
-
-        String test = "";
-
-        for (byte b : encrypted)
-
-        {
-
-            test += Byte.toString(b);
-
-        }
-
-        return test;
-
     }
 
  
 
     // Encrypt message
 
-    public static byte[] encrypt(byte[] message)
+    public byte[] encrypt(byte[] message)
 
     {
 
-        return (new BigInteger(message)).modPow(e, N).toByteArray();
+        return (new BigInteger(message)).modPow(e, n).toByteArray();
 
     }
 
@@ -168,11 +94,11 @@ public class Server
 
     // Decrypt message
 
-    public static byte[] decrypt(byte[] message)
+    public byte[] decrypt(byte[] message)
 
     {
 
-        return (new BigInteger(message)).modPow(d, N).toByteArray();
+        return (new BigInteger(message)).modPow(d, n).toByteArray();
 
     }
 
